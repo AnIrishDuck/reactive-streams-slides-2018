@@ -102,7 +102,7 @@ Reactive streams convert streams of events into first-class values:
 ---
 
 ## Leaky Abstractions
-###### https://www.joelonsoftware.com/2002/11/11/the-law-of-leaky-abstractions/
+###### Joel Spolsky, The Law of Leaky Abstractions
 
 1. All abstractions are leaky.
 2. Fixing the leaks get harder the higher we go.
@@ -205,7 +205,7 @@ Let's say you want to write some code that does live updates from a server:
 
 ---
 
-![bad things happened](//localhost:8001/narratives.png)
+![spaghetti narratives](narratives.png)
 
 ---
 
@@ -330,7 +330,7 @@ Reactive streams are a great way to wrap / build event emitters.
 
 ## The Elephant in the Room
 
-![the npm event-stream library has over one million weekly downloads](//localhost:8001/event-stream.png)
+![the npm event-stream library has over one million weekly downloads](event-stream.png)
 
 ---
 
@@ -345,7 +345,7 @@ Reactive streams are a great way to wrap / build event emitters.
 
 ## The Elephant is Now Rampaging Around the Room
 
-![bad things happened](//localhost:8001/fail.jpg)
+![bad things happened](fail.jpg)
 
 
 ---
@@ -373,4 +373,4 @@ Reactive streams are a great way to wrap / build event emitters.
 
 ## Any Questions?
 
-![questions?](//localhost:8001/david-pumpkins.jpg)
+![questions?](david-pumpkins.jpg)
