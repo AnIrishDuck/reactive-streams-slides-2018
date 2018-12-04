@@ -1,8 +1,18 @@
 # Reactive Streams
 
+#### Handling complex interaction between events.
+
 ---
 
-## tl;dr
+### Examples
+
+- Live, type-ahead, debounced search.
+- Complex coordinated animations.
+- Live front-end reloading from backend data changes.
+
+---
+
+## The Theory
 
 We can improve our code
 
@@ -10,134 +20,170 @@ By stealing ideas from functional programming.
 
 ---
 
-### Objectifying Reality
+### Object-ifying Reality
 
 Promises turn single-shot callbacks into first-class values:
 
+```js
+// from this:
+fs.readFile(path, (err, data) => console.log(data))
 
-    // from this:
-    fs.readFile(path, (err, data) => console.log(data))
-
-    // to this:
-    fs.readFile(path)
-        .then((data) => console.log(data))
+// to this:
+fs.readFile(path)
+    .then((data) => console.log(data))
+```
 
 ---
 
-### Objectifying Reality
+### Object-ifying Reality
 
 Reactive streams convert streams of events into first-class values:
 
 
-    // from this:
-    el.onchange = (value) => { view.innerHTML = value }
+```js
+// from this:
+el.onchange = (value) => { view.innerHTML = value }
 
-    // to this:
-    most.fromEvent(el, 'onchange')
-        .observe((value) => { view.innerHTML = value })
+// to this:
+most.fromEvent(el, 'onchange')
+    .observe((value) => { view.innerHTML = value })
+```
+
 
 ---
 
 ### Object Permanence
 
-- Futures are inherently "multi-cast"
-- Functions that return futures are **composable**
+- Reactive values are inherently "multi-cast"
+- Functions that return reactive values are **composable**
+- You can build a vocabulary of tools around these values to solve the same
+  problem over and over again.
 
 ---
 
 ## The Pyramid of Doom
 
-    fetchUsers((err, ids) => {
-        const id = findActiveUser(ids)
-        postGrade(id, grade, () => {
-            sendNotification(id, () => {
-                screenReaderNotification()
-            })
+```js
+fetchUsers((err, ids) => {
+    const id = findActiveUser(ids)
+    postGrade(id, grade, () => {
+        sendNotification(id, () => {
+            screenReaderNotification()
         })
     })
+})
+```
 
 ---
 
 ## Promises
 
-    // time ->
-    //
-    // |--------------o
-    //
-    // |--------------x
+```js
+// time ->
+//
+// |-------------->
+//
+// |--------------o
+//
+// |--------------x
+```
 
 ---
 
 ## Chaining
 
-    // time ->
-    //
-    // |-----o
-    //       |-----o
-    //             |-----o
-    //                   |-----o
-
-    fetchUsers
-        .then((ids) => {
-            const id = findActiveUser(ids)
-            postGrade(id, grade)
-        })
-        .then((id) => sendNotification(id))
-        .then(() => screenReaderNotification())
+```js
+// time ->
+//
+// |-----o
+//       |-----o
+//             |-----o
+//                   |-----o
+fetchUsers
+    .then((ids) => {
+        const id = findActiveUser(ids)
+        postGrade(id, grade)
+    })
+    .then((id) => sendNotification(id))
+    .then(() => screenReaderNotification())
+```
 
 ---
 
 ## Combining
 
-    // time ->
-    //
-    // |---o
-    // |-----o
-    //       |--o
+```js
+// time ->
+//
+// |---o
+// |-----o
+//       |--o
 
-    Promise.all([fetchStudentIds(), fetchAssessmentId()])
-        .then(([ids, assessmentId]) => fetchGrades(ids, assessmentId))
-        .then((grades) => renderUI(grades))
+Promise.all([fetchStudentIds(), fetchAssessmentId()])
+    .then(([ids, assessmentId]) => fetchGrades(ids, assessmentId))
+    .then((grades) => renderUI(grades))
+```
 
 ---
 
-## Leaky Abstractions
-###### Joel Spolsky, The Law of Leaky Abstractions
+## The Law of Leaky Abstractions
+via Joel Spolsky
 
 1. All abstractions are leaky.
-2. Fixing the leaks get harder the higher we go.
+2. Fixing the leaks get harder the higher we build.
 
 ---
 
 ## The Phantom Menace
 
-    function loadData () {
-        fetchData()
-            .then((data) => doComplicatedTransform(data))
-            .then((transformed) => renderResults(transformed))
-    }
+```js
+function loadData () {
+    fetchData()
+        .then((data) => doComplicatedTransform(data))
+        .then((transformed) => renderResults(transformed))
+}
+
+async function chainThings () {
+    await loadData()
+    screenReaderNotification('yay')
+}
+```
 
 ---
 
 ## Unmasked
 
-    function loadData () {
-        fetchData()
-            .then((data) => doComplicatedTransform(data)) // boom!
-            .then((transformed) => renderResults(transformed))
-    }
+```js
+function loadData () {
+    fetchData()
+        .then((data) => doComplicatedTransform(data)) // boom!
+        .then((transformed) => renderResults(transformed))
+}
+
+
+async function chainThings () {
+    await loadData()
+    screenReaderNotification('yay')
+}
+```
 
 ---
 
 ## Banished
 
-    function loadData () {
-        // begone, phantom error!
-        return fetchData()
-            .then((data) => doComplicatedTransform(data))
-            .then((transformed) => renderResults(transformed))
-    }
+```js
+function loadData () {
+    // begone, phantom error!
+    return fetchData()
+        .then((data) => doComplicatedTransform(data))
+        .then((transformed) => renderResults(transformed))
+}
 
+async function chainThings {
+    await loadData()
+    screenReaderNotification('yay')
+}
+```
 
 ---
 
@@ -150,28 +196,40 @@ Reactive streams convert streams of events into first-class values:
 
 ## Lifetimes of Reactive Streams
 
-    // time ->
-    //
-    // |--a-b-c-d|
-    //
-    // |---a----------x
-    //
-    // |----a------------->
+```js
+// time ->
+//
+// |--a-b-c-d|
+//
+// |---a----------x
+//
+// |----a------------->
+```
 
 ---
 
 ## Reactive Streams Subsume Promises
 
-    // A promise that resolves is a stream that emits a single value and then
-    // immediately resolves:
-    // |------o
-    // |------a|
-    //
-    // A promise and a stream can reject:
-    // |-----x
-    //
-    // A promise and a stream can *never* resolve (beware of memory leaks!)
-    // |------------------>
+```js
+// A promise that resolves is a stream that emits a single value and then
+// immediately resolves:
+// |------o
+// |------a|
+//
+// A promise and a stream can reject:
+// |-----x
+//
+// A promise and a stream can *never* resolve (beware of memory leaks!)
+// |------------------>
+```
+
+---
+
+![spaghetti narratives](narratives.png)
+
+---
+
+![most example](most.png)
 
 ---
 
@@ -188,48 +246,51 @@ Let's say you want to write some code that does live updates from a server:
 
 ## Simple?
 
-    const doRequest = (query) => {
-        request(query).then((result) => updateView(result))
-    }
+```js
+const doRequest = (query) =>
+    request(query).then((result) => updateView(result))
 
-    input.onchange = _.debounce(doRequest)
+input.onchange = _.debounce(doRequest)
+```
 
 ---
 
 ## Too Soon!
 
-    // input     |---a---b---------------->
-    // request a     |-------------ra
-    // request b         |---rb
-    // view      |-----------rb----ra!---->
-
----
-
-![spaghetti narratives](narratives.png)
+```js
+// input     |---a---b---------------->
+// request a     |-------------ra
+// request b         |---rb
+// view      |-----------rb----ra!---->
+```
 
 ---
 
 ## Fixed
 
-    let ix = 0
-    const doRequest = (query) => {
-        ix += 1
-        const current = ix
-        request(query)
-            .then((result) => current === ix ? updateView(result) : null)
-    }
+```js
+let ix = 0
+const doRequest = (query) => {
+    ix += 1
+    const current = ix
+    return request(query)
+        .then((result) => current === ix ? updateView(result) : null)
+}
 
-    input.onchange = _.debounce(doRequest)
+input.onchange = _.debounce(doRequest)
+```
 
 ---
 
 ## Reactive
 
-    most.fromEvent(input, 'onchange')
-        .debounce()
-        .flatMap((query) => most.fromPromise(request(query)))
-        .switchLatest()
-        .observe(updateView)
+```js
+most.fromEvent(input, 'onchange')
+    .debounce()
+    .flatMap((query) => most.fromPromise(request(query)))
+    .switchLatest()
+    .observe(updateView)
+```
 
 ---
 
@@ -243,64 +304,70 @@ Let's say you want to write some code that does live updates from a server:
 ## Disadvantages
 
 - Error handling is where promises were five years ago.
-- Streams sharing can do strange things (without `.multicast()`)
 - "hot" versus "cold" observables.
 
 ---
 
-## Stream Sharing
+## Hot vs. Cold
 
-    const data = keyInputs.map((string) => parseInt(string) * 2)
-
-    data.observe((x) => console.log(x))
-    data.observe((x) => updateView(x))
+- Promises have three states: resolved, rejected, and pending.
+- Chaining `.then` or `.catch` is time-invariant.
 
 ---
 
-## Sharing for Everyone
+## Hot Observables
 
-    const data = keyInputs.map((string) => parseInt(string) * 2)
-                          .multicast()
+- Do not buffer incoming events.
+- Adding observers will do different things at different times.
 
-    data.observe((x) => console.log(x))
-    data.observe((x) => updateView(x))
+---
+
+## Cold Observables
+
+- Buffers prior events.
+- Observers are now time-invariant again.
 
 ---
 
 ## Missed Connections
 
-    function gradeOnCurve () {
-        const ee = new EventEmitter()
-        const spy = sinon.spy((args) => ee.emit('call', args))
-        const calls = most.fromEvent(ee, 'call')
+```js
+describe('it calls the provided callback three times', async () => {
+    const ee = new EventEmitter()
+    const spy = sinon.spy((args) => ee.emit('call', args))
+    const calls = most.fromEvent(ee, 'call')
 
-        simulateThreeLoadCalls(spy)
+    simulateThreeLoadCalls(spy)
 
-        const firstArgs = calls
-            .map((args) => args[0])
-            .take(3)
-            .reduce((acc, cur) => [...acc, cur])
+    const firstArgs = calls
+        .map((args) => args[0])
+        .take(3)
+        .reduce((acc, cur) => [...acc, cur])
 
-        expect(firstArgs).toEqual(['call 1', 'call 2', 'call 3'])
-    }
+    expect(await firstArgs).toEqual(['call 1', 'call 2', 'call 3'])
+}
+```
 
 ---
 
 ## Dude, Where's My Call
 
-    describe('it calls the provided callback three times', () => {
-        const ee = new EventEmitter()
-        const spy = sinon.spy((args) => ee.emit('call', args))
-        const calls = most.fromEvent(ee, 'call').take(3)
-            .take(3)
-            .reduce((acc, cur) => [...acc, cur])
+```js
+describe('it calls the provided callback three times', async () => {
+    const ee = new EventEmitter()
+    const spy = sinon.spy((args) => ee.emit('call', args))
+    const calls = most.fromEvent(ee, 'call').take(3)
+        .map((args) => args[0])
+        .take(3)
+        .reduce((acc, cur) => [...acc, cur])
 
-        performThreeLoads(spy)
+    performThreeLoads(spy)
 
-        const firstArgs = calls.map((args) => args[0])
-        expect(firstArgs.reduce((acc, cur) => [...acc, cur]))
-            .toEqual(['call 1', 'call 2', 'call 3'])
-    })
+    const firstArgs = await calls
+    expect(firstArgs.reduce((acc, cur) => [...acc, cur]))
+        .toEqual(['call 1', 'call 2', 'call 3'])
+})
+```
 
 ---
 
@@ -339,14 +406,13 @@ Reactive streams are a great way to wrap / build event emitters.
 `not@black.hat`
 
 
-###### https://blog.npmjs.org/post/180565383195/details-about-the-event-stream-incident
+###### npmjs, Details About the Event Stream Incident
 
 ---
 
 ## The Elephant is Now Rampaging Around the Room
 
 ![bad things happened](fail.jpg)
-
 
 ---
 
@@ -368,6 +434,12 @@ Reactive streams are a great way to wrap / build event emitters.
 
 - Reactive streams are pretty cool.
 - Get everybody on board **before** using them.
+
+---
+
+## tl;dr
+
+![don't use a hammer as a screwdriver](hammer.jpg)
 
 ---
 

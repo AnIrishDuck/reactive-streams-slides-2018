@@ -5,6 +5,7 @@ export default ({ data, transition }) => (
   <div style={{'width': '100%'}}>
     <div
       style={transition && transition.style}
+      className='slide-body'
       dangerouslySetInnerHTML={{ __html: data.slide.html }}
     />
   </div>
